@@ -1,0 +1,65 @@
+          #!/bin/bash
+      
+          # Redirect all output to a log file
+          exec > >(tee -a /var/log/commands_executions_log.output) 2>&1
+      
+          # Install docker and docker-compose
+          sudo yum update -y
+          sudo yum install -y docker
+          sudo systemctl enable docker
+          sudo yum install -y python3-pip python3-wheel
+          sudo pip3 install docker-compose
+          sudo usermod -a -G docker ec2-user
+      
+          # Create "rp_folder" and Elasticsearch data directory
+          mkdir -p /home/ec2-user/rp_folder
+          mkdir -p /home/ec2-user/rp_folder/data/elasticsearch
+      
+          # Fixes for Elasticsearch
+          sudo chown 1000:1000 /home/ec2-user/rp_folder/data/elasticsearch
+          echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
+          sudo sysctl -p
+      
+          # Configure automatic security updates
+          sudo yum install -y yum-cron
+          sudo sed -i 's/^update_cmd *=.*/update_cmd = security/' /etc/yum/yum-cron.conf
+          sudo sed -i 's/^update_messages *=.*/update_messages = yes/' /etc/yum/yum-cron.conf
+          sudo sed -i 's/^download_updates *=.*/download_updates = yes/' /etc/yum/yum-cron.conf
+          sudo sed -i 's/^apply_updates *=.*/apply_updates = yes/' /etc/yum/yum-cron.conf
+          sudo systemctl enable yum-cron
+          sudo systemctl start yum-cron
+      
+          # Download docker-compose file
+          cd /home/ec2-user/rp_folder
+          wget https://raw.githubusercontent.com/reportportal/reportportal/master/docker-compose.yml  
+      
+          # Start the docker service
+          sudo systemctl start docker
+      
+          # Create and enable reportportal-docker-compose service
+          sudo bash -c "cat > /etc/systemd/system/reportportal-docker-compose.service" << EOL
+          [Unit]
+          Description=ReportPortal Docker Compose Service
+          Requires=docker.service
+          After=docker.service
+      
+          [Service]
+          Type=oneshot
+          RemainAfterExit=yes
+          WorkingDirectory=/home/ec2-user/rp_folder
+          ExecStart=/usr/local/bin/docker-compose start
+          ExecStop=/usr/local/bin/docker-compose down
+          User=ec2-user
+      
+          [Install]
+          WantedBy=multi-user.target
+          EOL
+      
+          # Reload systemd config
+          sudo systemctl daemon-reload
+      
+          # Enable reportportal-docker-compose service
+          sudo systemctl enable reportportal-docker-compose
+      
+          # Start docker-compose with project name "reportportal" and force-recreate containers
+          docker-compose -p reportportal up -d --force-recreate
