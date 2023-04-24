@@ -120,7 +120,7 @@ services:
   db-scripts:
     image: reportportal/migrations:5.7.3
     environment:
-      POSTGRES_SERVER: postgres
+      POSTGRES_SERVER: reportportal-db5.c22xzvbrghrn.eu-west-1.rds.amazonaws.com
       POSTGRES_PORT: 5432
       POSTGRES_DB: reportportal
       POSTGRES_USER: rpuser
@@ -186,7 +186,7 @@ services:
     # ports:
     #   - "9999:9999"
     environment:
-      RP_DB_HOST: reportportal-db3.c22xzvbrghrn.eu-west-1.rds.amazonaws.com
+      RP_DB_HOST: reportportal-db5.c22xzvbrghrn.eu-west-1.rds.amazonaws.com
       RP_DB_USER: rpuser
       RP_DB_PASS: rppass001
       RP_DB_NAME: reportportal
@@ -232,7 +232,7 @@ services:
       ## Double entry moves test logs from PostgreSQL to Elastic-type engines
       ## Ref: https://reportportal.io/blog/double-entry-in-5.7.2
       RP_ELASTICSEARCHLOGMESSAGE_HOST: "true"
-      RP_DB_HOST: reportportal-db3.c22xzvbrghrn.eu-west-1.rds.amazonaws.com
+      RP_DB_HOST: reportportal-db5.c22xzvbrghrn.eu-west-1.rds.amazonaws.com
       RP_DB_USER: rpuser
       RP_DB_PASS: rppass001
       RP_DB_NAME: reportportal
